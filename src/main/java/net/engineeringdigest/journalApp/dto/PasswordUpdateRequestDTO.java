@@ -1,9 +1,11 @@
 package net.engineeringdigest.journalApp.dto;
 
-import lombok.Data;
 
-@Data
+import lombok.Value;
+
+@Value
 public class PasswordUpdateRequestDTO {
-    private String oldPassword;
-    private String newPassword;
+    String oldPassword;
+    String newPassword;
 }
+

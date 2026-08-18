@@ -1,9 +1,12 @@
 package net.engineeringdigest.journalApp.services;
 
 import lombok.extern.slf4j.Slf4j;
+import net.engineeringdigest.journalApp.dto.DeleteUserDTO;
 import net.engineeringdigest.journalApp.dto.PasswordUpdateRequestDTO;
 import net.engineeringdigest.journalApp.dto.UserUpdateDTO;
+import net.engineeringdigest.journalApp.entity.JournalEntry;
 import net.engineeringdigest.journalApp.entity.User;
+import net.engineeringdigest.journalApp.repository.JournalEntryRepo;
 import net.engineeringdigest.journalApp.repository.UserRepo;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,8 +14,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -20,6 +25,10 @@ public class UserService {
 
     @Autowired
     private UserRepo userRepo;
+
+    @Autowired
+    JournalEntryRepo journalEntryRepo;
+
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -95,5 +104,27 @@ public class UserService {
         return userRepo.findByUserName(userName);
     }
 
+    @Transactional
+    public String deleteByUserName(DeleteUserDTO deleteUserDTO) {
+        try {
+            User user=userRepo.findByUserName(SecurityContextHolder.getContext().getAuthentication().getName());
+            if(user!=null){
+                if(passwordEncoder.matches(deleteUserDTO.getPassword(),user.getPassword())){
+                    if(user.getJournalEntries()!=null && !user.getJournalEntries().isEmpty() ){
+                        List<ObjectId> entries=user.getJournalEntries().stream().map(JournalEntry :: getId).collect(Collectors.toList());
+                        journalEntryRepo.deleteAllById(entries);
+                    }
+                    userRepo.deleteByUserName(user.getUserName());
+                    return "Deleted";
+                }else {
+                    return "Wrong Password";
+                }
+            }
+            return "An Error Occurred";
+        }catch (Exception e){
+            return "An Error Occurred";
+        }
 
+
+    }
 }

@@ -1,5 +1,6 @@
 package net.engineeringdigest.journalApp.controllers;
 
+import net.engineeringdigest.journalApp.dto.DeleteUserDTO;
 import net.engineeringdigest.journalApp.dto.PasswordUpdateRequestDTO;
 import net.engineeringdigest.journalApp.dto.UserUpdateDTO;
 import net.engineeringdigest.journalApp.entity.User;
@@ -36,5 +37,23 @@ public class UserController {
         }
         return new ResponseEntity<>("Old password is incorrect",HttpStatus.UNPROCESSABLE_ENTITY);
 
+    }
+
+    @DeleteMapping
+    public ResponseEntity<?> deleteUser(@RequestBody DeleteUserDTO deleteUserDTO){
+        String result= userService.deleteByUserName(deleteUserDTO);
+        if(result.equals("Deleted")){
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }else if(result.equals("Wrong Password")) {
+            return new ResponseEntity<>("Wrong Password",HttpStatus.FORBIDDEN);
+        }else {
+            return new ResponseEntity<>("Something went wrong",HttpStatus.NOT_ACCEPTABLE);
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity<?> greetings(){
+        String user=SecurityContextHolder.getContext().getAuthentication().getName();
+        return new ResponseEntity<>("Hi"+user,HttpStatus.OK);
     }
 }

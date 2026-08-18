@@ -25,8 +25,8 @@ public class ConfigSecurityModern {
         http
                 // 1. Configure Authorization Rules using Lambda DSL
                 .authorizeHttpRequests(auth -> auth
- //                       .requestMatchers("/journal/**", "/user/**").authenticated()
-   //                     .requestMatchers("/admin/**").hasRole("ADMIN")
+//                        .requestMatchers("/journal/**", "/user/**").authenticated()
+//                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().permitAll()
                 )
                 // 2. Configure HTTP Basic AuthenticationC

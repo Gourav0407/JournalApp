@@ -1,5 +1,6 @@
 package net.engineeringdigest.journalApp.services;
 
+import net.engineeringdigest.journalApp.dto.JouranalEntryDTO;
 import net.engineeringdigest.journalApp.entity.JournalEntry;
 import net.engineeringdigest.journalApp.entity.User;
 import net.engineeringdigest.journalApp.repository.JournalEntryRepo;
@@ -47,7 +48,7 @@ public class JournalEntryService {
 
     }
 
-    public Boolean updateEntry(JournalEntry journalEntry,ObjectId myId){
+    public Boolean updateEntry(JouranalEntryDTO journalEntry, ObjectId myId){
         User user= userService.findByUserName(SecurityContextHolder.getContext().getAuthentication().getName());
         if (user != null &&
                 user.getJournalEntries().stream()
@@ -56,10 +57,10 @@ public class JournalEntryService {
 
             JournalEntry old = journalEntryRepo.findById(myId).orElse(null);
             if (old != null) {
-                old.setTitle(!journalEntry.getTitle().isEmpty() ? journalEntry.getTitle() : old.getTitle());
+                old.setTitle(journalEntry.getTitle()!=null && !journalEntry.getTitle().isEmpty() ? journalEntry.getTitle() : old.getTitle());
                 old.setContent(journalEntry.getContent() != null && !journalEntry.getContent().isEmpty() ? journalEntry.getContent() : old.getContent());
+                old.setSentiments(journalEntry.getSentiments() != null ? journalEntry.getSentiments() : old.getSentiments());
                 journalEntryRepo.save(old);
-                JournalEntry save = journalEntryRepo.save(journalEntry);
                 return true;
             }
         }

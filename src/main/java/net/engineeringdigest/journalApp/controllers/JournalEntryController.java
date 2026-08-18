@@ -1,5 +1,6 @@
 package net.engineeringdigest.journalApp.controllers;
 
+import net.engineeringdigest.journalApp.dto.JouranalEntryDTO;
 import net.engineeringdigest.journalApp.entity.JournalEntry;
 import net.engineeringdigest.journalApp.services.JournalEntryService;
 import net.engineeringdigest.journalApp.services.UserService;
@@ -15,7 +16,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/journal")
-public class JournalEntryCollectorV2 {
+public class JournalEntryController {
 
     @Autowired
     private JournalEntryService journalEntryService;
@@ -64,7 +65,7 @@ public class JournalEntryCollectorV2 {
     }
 
     @PutMapping("/id/{myId}")
-    public ResponseEntity<?> updateEntry(@PathVariable ObjectId myId, @RequestBody JournalEntry newEntry) throws Exception {
+    public ResponseEntity<?> updateEntry(@PathVariable ObjectId myId, @RequestBody JouranalEntryDTO newEntry) throws Exception {
         Boolean updated = journalEntryService.updateEntry(newEntry, myId);
         if(updated){
             return new ResponseEntity<>("Updated Successfully", HttpStatus.OK);
