@@ -9,6 +9,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
+@Service
 public class RedisService {
 
     private final RedisTemplate redisTemplate;
