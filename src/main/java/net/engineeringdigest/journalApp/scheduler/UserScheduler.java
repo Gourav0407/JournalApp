@@ -1,11 +1,14 @@
 package net.engineeringdigest.journalApp.scheduler;
 
+import lombok.extern.slf4j.Slf4j;
 import net.engineeringdigest.journalApp.entity.JournalEntry;
 import net.engineeringdigest.journalApp.entity.User;
 import net.engineeringdigest.journalApp.enums.Sentiments;
+import net.engineeringdigest.journalApp.model.SentimentData;
 import net.engineeringdigest.journalApp.repository.UserRepo;
 import net.engineeringdigest.journalApp.services.MailService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
@@ -22,16 +25,20 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
+@Slf4j
 public class UserScheduler {
 
     private final UserRepo userRepo;
 
     private final MailService mailService;
 
+    private final KafkaTemplate<String, SentimentData> kafkaTemplate;
+
     @Autowired
-    public UserScheduler(UserRepo userRepo, MailService mailService){
+    public UserScheduler(UserRepo userRepo, MailService mailService,KafkaTemplate<String, SentimentData> kafkaTemplate){
         this.userRepo=userRepo;
         this.mailService=mailService;
+        this.kafkaTemplate=kafkaTemplate;
     }
 
     @Scheduled(cron = "0 * * * * *")
@@ -39,7 +46,10 @@ public class UserScheduler {
         List<User> users= userRepo.getListOfUserForSA();
         for(User user : users){
             List<JournalEntry> journalEntries= user.getJournalEntries();
-            List<Sentiments> sentiments= journalEntries.stream().filter(entry-> ChronoUnit.DAYS.between(entry.getDate(),LocalDateTime.now())<7).map(entry-> entry.getSentiments()).collect(Collectors.toList());
+            List<Sentiments> sentiments= journalEntries.stream().
+                    filter(entry-> ChronoUnit.DAYS.between(entry.getDate(),LocalDateTime.now())<7)
+                    .map(entry-> entry.getSentiments())
+                    .collect(Collectors.toList());
             Map<Sentiments,Integer> sentimentsCountMap= new HashMap<>();
             for (Sentiments sentiment : sentiments){
                 if(sentimentsCountMap.containsKey(sentiment)){
@@ -58,7 +68,14 @@ public class UserScheduler {
             }
 
             if(thisWeekSentiment!=null){
-                mailService.sendMail(user.getEmail(),"Sentiments",thisWeekSentiment.getValue());
+                SentimentData sentimentData= SentimentData.builder().email(user.getEmail()).sentiments(thisWeekSentiment).build();
+                try {
+                    kafkaTemplate.send("weekly-sentiments",user.getUserName(),sentimentData);
+                    System.out.println("Successfully sent and confirmed: " + sentimentData.getEmail());
+                }catch (Exception e){
+                    log.error("Exception",e);
+                }
+
             }
         }
     }
